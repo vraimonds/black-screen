@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Black Screen with Full Screen Toggle</title>
+    <link rel="icon" href="favicon-black.png" type="image/png">
+    <style>
+        /* Make the body fill the viewport and set background to black */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Function to toggle Full Screen mode
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                // Enter full screen
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                // Exit full screen
+                document.exitFullscreen();
+            }
+        }
+
+        // Event listener for keydown events
+        document.addEventListener('keydown', (event) => {
+            // Check if the 'F' key is pressed
+            if (event.key === 'F' || event.key === 'f') {
+                event.preventDefault(); // Prevent default action if any
+                toggleFullScreen();
+            }
+        });
+    </script>
+</body>
+</html>
