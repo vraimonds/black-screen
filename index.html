@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Black Screen with Full Screen Toggle</title>
+    <title>Black Screen Timer</title>
     <link rel="icon" href="favicon-black.png" type="image/png">
     <style>
-        /* Make the body fill the viewport and set background to black */
+        /* Fullscreen black background with centered content */
         body {
             margin: 0;
             padding: 0;
@@ -13,29 +13,185 @@
             height: 100vh;
             width: 100vw;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        #timerContainer {
+            text-align: center;
+            display: none; /* Hidden by default */
+            flex-direction: column; /* Stack elements vertically */
+            align-items: center;
+        }
+
+        #timer {
+            font-size: 10rem;
+            font-weight: bold;
+            color: white;
+            background: none;
+            border: none;
+            text-align: center;
+            outline: none;
+            width: 20ch;
+            caret-color: white;
+        }
+
+        #timer:focus {
+            outline: none;
+            border-bottom: 2px solid white;
+        }
+
+        #playButton {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #playButton svg {
+            width: 50px;
+            height: 50px;
+            fill: white;
+            transition: transform 0.2s ease;
+        }
+
+        #playButton:hover svg {
+            transform: scale(1.1);
         }
     </style>
 </head>
 <body>
+    <div id="timerContainer">
+        <input id="timer" value="05:00" maxlength="5" />
+        <button id="playButton" aria-label="Start Timer">
+            <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+            <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="display: none;">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+            </svg>
+        </button>
+    </div>
+
     <script>
-        // Function to toggle Full Screen mode
+        const timerContainer = document.getElementById('timerContainer');
+        const timerInput = document.getElementById('timer');
+        const playButton = document.getElementById('playButton');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        let timerInterval;
+        let isRunning = false; // Track if the timer is running
+        let remainingSeconds;
+
+        // Function to toggle full-screen mode
         function toggleFullScreen() {
             if (!document.fullscreenElement) {
-                // Enter full screen
                 document.documentElement.requestFullscreen().catch(err => {
                     console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
                 });
             } else {
-                // Exit full screen
                 document.exitFullscreen();
             }
         }
 
-        // Event listener for keydown events
+        // Function to toggle the visibility of the timer
+        function toggleTimerVisibility() {
+            timerContainer.style.display =
+                timerContainer.style.display === 'none' ? 'flex' : 'none';
+            if (timerContainer.style.display === 'flex') {
+                timerInput.focus(); // Focus on timer input for convenience
+            }
+        }
+
+        // Start or pause the timer
+        function toggleTimer() {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        // Start the timer
+        function startTimer() {
+            if (!isRunning) {
+                const timeParts = timerInput.value.split(':');
+                if (timeParts.length !== 2 || isNaN(timeParts[0]) || isNaN(timeParts[1])) {
+                    alert('Please enter a valid time in MM:SS format.');
+                    return;
+                }
+
+                if (remainingSeconds === undefined) {
+                    remainingSeconds =
+                        parseInt(timeParts[0], 10) * 60 + parseInt(timeParts[1], 10);
+                }
+
+                if (isNaN(remainingSeconds) || remainingSeconds <= 0) {
+                    alert('Please enter a time greater than 00:00.');
+                    return;
+                }
+
+                timerInterval = setInterval(() => {
+                    remainingSeconds--;
+                    updateTimerDisplay(remainingSeconds);
+
+                    if (remainingSeconds <= 0) {
+                        clearInterval(timerInterval);
+                        remainingSeconds = undefined;
+                        isRunning = false;
+                        togglePlayPauseIcons();
+                        alert("Time's up!");
+                    }
+                }, 1000);
+
+                isRunning = true;
+                togglePlayPauseIcons();
+            }
+        }
+
+        // Pause the timer
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            togglePlayPauseIcons();
+        }
+
+        // Update the timer display
+        function updateTimerDisplay(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            timerInput.value = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // Toggle play/pause icons
+        function togglePlayPauseIcons() {
+            if (isRunning) {
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'inline';
+            } else {
+                playIcon.style.display = 'inline';
+                pauseIcon.style.display = 'none';
+            }
+        }
+
+        // Add event listener to the play button
+        playButton.addEventListener('click', toggleTimer);
+
+        // Allow only numeric input and ":" in the timer input
+        timerInput.addEventListener('input', () => {
+            timerInput.value = timerInput.value.replace(/[^0-9:]/g, '');
+        });
+
+        // Add keydown event listener
         document.addEventListener('keydown', (event) => {
-            // Check if the 'F' key is pressed
-            if (event.key === 'F' || event.key === 'f') {
-                event.preventDefault(); // Prevent default action if any
+            if (event.key === 'T' || event.key === 't') {
+                event.preventDefault();
+                toggleTimerVisibility();
+            } else if (event.key === 'F' || event.key === 'f') {
+                event.preventDefault();
                 toggleFullScreen();
             }
         });
